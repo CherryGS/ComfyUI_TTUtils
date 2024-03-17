@@ -9,7 +9,7 @@ class ClipTextEncoderPlus:
         return {
             "required": {
                 "clip": ("CLIP",),
-                "text": ("STRING", {"multiple": True}),
+                "text": ("STRING", {"multiline": False}),
                 "cond": ("CONDITIONING",),
                 "opt": (["combine", "average"],),
             },
@@ -18,7 +18,7 @@ class ClipTextEncoderPlus:
     RETURN_TYPES = ("CONDITIONING",)
     RETURN_NAMES = ()
     FUNCTION = "solve"
-    CATEGORY = "Tickten"
+    CATEGORY = "TT"
 
     def encode(self, clip, text):
         tokens = clip.tokenize(text)
