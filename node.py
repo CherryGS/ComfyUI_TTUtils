@@ -1,24 +1,47 @@
-from .typed import TypedClass
+# from .typed import TypedClass
+from typed import *
 
-NODE_CLASS_MAPPINGS = {}
-NODE_DISPLAY_NAME_MAPPINGS = {}
 
-class ClipTextEncoderPlus(TypedClass):
+class ClipTextEncoderPlus:
 
     @classmethod
     def INPUT_TYPES(cls):
-        return 1
         return {
             "required": {
-                "pre_clip": ("CLIP",),
-                "extra_propmt": ("STRING", {"multiple": True})
+                "clip": ("CLIP",),
+                "text": ("STRING", {"multiple": True}),
+                "cond": ("CONDITIONING",),
+                "opt": (["combine", "average"],),
             },
         }
 
-    RETURN_TYPES = ("CONDITIONING", )
+    RETURN_TYPES = ("CONDITIONING",)
     RETURN_NAMES = ()
-    FUNCTION = "combine"
+    FUNCTION = "solve"
     CATEGORY = "Tickten"
 
-    def combine(self, pre_clip, extra_propmt):
-        pass
+    def encode(self, clip, text):
+        tokens = clip.tokenize(text)
+        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+        return ([[cond, {"pooled_output": pooled}]],)
+
+    def solve(self, clip, text: str, cond, opt: str):
+        match opt:
+            case "combine":
+                return [cond + self.encode(clip, text)]
+            case "average":
+                pass
+
+
+NODE_CLASS_MAPPINGS: T_NODE_CLASS_MAPPINGS = {
+    "ClipTextEncoderPlus": ClipTextEncoderPlus
+}
+NODE_DISPLAY_NAME_MAPPINGS = {"ClipTextEncoderPlus": "Clip Text Encoder +"}
+
+if __name__ == "__main__":
+    """"""
+    # def check(x: TypedClass):
+    #     pass
+
+    # for i in NODE_CLASS_MAPPINGS.values():
+    #     check(i)

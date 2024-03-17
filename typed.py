@@ -1,8 +1,14 @@
 import typing as tp
-tp.IO
 
-INPUT_TYPE = dict[str, tuple]
 
-class TypedClass:
+clip = tp.TypeVar("clip")
+
+input_type = dict[str, dict[str, tuple[str | list, dict[str, int | str | bool] | None]]]
+
+
+class TypedClass(tp.Protocol):
     @classmethod
-    def INPUT_TYPES(cls) -> INPUT_TYPE: ...
+    def INPUT_TYPES(cls) -> input_type: ...
+
+
+T_NODE_CLASS_MAPPINGS = dict[str, TypedClass]

@@ -1,0 +1,6 @@
+{
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.enableSyncServer": true,
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.stubPath": "typing"
+}
