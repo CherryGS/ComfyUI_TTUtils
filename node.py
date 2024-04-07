@@ -14,19 +14,27 @@ class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
     output = (BaseProp(PropType.cond, ""),)
     OUTPUT_NODE = True
     FUNCTION = "solve"
-    CATEGORY = "TT"
+    CATEGORY = "Tickt"
 
     def encode(self, clip, text):
         tokens = clip.tokenize(text)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        return ([[cond, {"pooled_output": pooled}]],)
+        return [[cond, {"pooled_output": pooled}]]
 
-    def solve(self, clip, text: str, cond, opt: str):
+    def solve(self, clip, text: str, cond_in, opt: str):
         match opt:
             case "combine":
-                return [cond + self.encode(clip, text)]
-            case "average":
-                pass
+                return (
+                    clip,
+                    cond_in + self.encode(clip, text),
+                )
+            case "ignore":
+                return (
+                    clip,
+                    self.encode(clip, text),
+                )
+            case _:
+                raise NotImplemented
 
 
 NODE_CLASS_MAPPINGS = {"ClipTextEncoderPlus": ClipTextEncoderPlus}
