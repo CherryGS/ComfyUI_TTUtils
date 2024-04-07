@@ -1,22 +1,18 @@
 # from .typed import TypedClass
-from typed import *
+from core import *
 
 
-class ClipTextEncoderPlus:
+class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
 
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "clip": ("CLIP",),
-                "text": ("STRING", {"multiline": False}),
-                "cond": ("CONDITIONING",),
-                "opt": (["combine", "average"],),
-            },
-        }
+    input = (
+        Clip("clip"),
+        String("text"),
+        BaseProp(PropType.cond, "cond"),
+        Select("opt", select=["combine", "average"]),
+    )
 
-    RETURN_TYPES = ("CONDITIONING",)
-    RETURN_NAMES = ()
+    output = (BaseProp(PropType.cond, ""),)
+    OUTPUT_NODE = True
     FUNCTION = "solve"
     CATEGORY = "TT"
 
@@ -33,9 +29,7 @@ class ClipTextEncoderPlus:
                 pass
 
 
-NODE_CLASS_MAPPINGS: T_NODE_CLASS_MAPPINGS = {
-    "ClipTextEncoderPlus": ClipTextEncoderPlus
-}
+NODE_CLASS_MAPPINGS = {"ClipTextEncoderPlus": ClipTextEncoderPlus}
 NODE_DISPLAY_NAME_MAPPINGS = {"ClipTextEncoderPlus": "Clip Text Encoder +"}
 
 if __name__ == "__main__":
