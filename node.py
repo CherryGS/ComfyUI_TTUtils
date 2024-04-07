@@ -11,7 +11,7 @@ class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
         Select("opt", select=["combine", "average", "ignore"]),
     )
 
-    output = (Conditioning("cond_out"), Clip("clip"))
+    output = (Clip("clip"), Conditioning("cond_out"))
     OUTPUT_NODE = True
     FUNCTION = "solve"
     CATEGORY = "Tickt"
