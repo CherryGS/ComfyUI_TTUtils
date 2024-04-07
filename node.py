@@ -1,5 +1,5 @@
 # from .typed import TypedClass
-from core import *
+from .core import *
 
 
 class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
