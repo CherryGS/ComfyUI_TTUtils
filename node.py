@@ -7,11 +7,11 @@ class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
     input = (
         Clip("clip"),
         String("text"),
-        BaseProp(PropType.cond, "cond"),
-        Select("opt", select=["combine", "average"]),
+        Conditioning("cond_in"),
+        Select("opt", select=["combine", "average", "ignore"]),
     )
 
-    output = (BaseProp(PropType.cond, ""),)
+    output = (Conditioning("cond_out"), Clip("clip"))
     OUTPUT_NODE = True
     FUNCTION = "solve"
     CATEGORY = "Tickt"

@@ -133,6 +133,11 @@ class String(BaseProp):
     default: str = field(default="")
 
 
+@dataclass
+class Conditioning(BaseProp):
+    _type: PropType = field(default=PropType.cond, init=False)
+
+
 class BaseMeta(type):
     def __init__(cls, *args, **kwargs):
         super().__init__(*args, **kwargs)
