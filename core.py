@@ -34,6 +34,8 @@ class PropType(str, Enum):
     vae = "VAE"
     latent = "LATENT"
     image = "IMAGE"
+    mask = "MASK"
+    net = "CONTROL_NET"
     int = "INT"
     float = "FLOAT"
     string = "STRING"
@@ -128,6 +130,7 @@ class Float(BaseProp):
 class String(BaseProp):
     _type: PropType = field(default=PropType.string, init=False)
 
+    forceInput: bool = field(default=False)
     multiline: bool = field(default=False)
     """True if you want the field to look like the one on the ClipTextEncode node"""
     default: str = field(default="")
