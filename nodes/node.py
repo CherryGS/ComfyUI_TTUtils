@@ -37,8 +37,10 @@ class ClipTextEncoderPlus(BaseNode, metaclass=BaseMetaClass):
                 raise NotImplemented
 
 
-NODE_CLASS_MAPPINGS = {"ClipTextEncoderPlus": ClipTextEncoderPlus}
-NODE_DISPLAY_NAME_MAPPINGS = {"ClipTextEncoderPlus": "Clip Text Encoder +"}
+from . import register
+
+register.ezupd([(ClipTextEncoderPlus,)])
+
 
 if __name__ == "__main__":
     """"""
