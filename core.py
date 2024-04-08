@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from pprint import pprint
 from typing import Any, Literal
 import json
 
@@ -66,14 +65,15 @@ class BaseProp:
         return {
             i: j
             for i, j in filter(
-                lambda x: x[0] not in ["key", "select"], self.__dict__.items()
+                lambda x: x[0] not in ["key", "select"] and x[1] is not None,
+                self.__dict__.items(),
             )
         }
 
     def _res(self):
         if self._type != PropType.select:
             return (self._type, self._gen())
-        return (self.select,)
+        return (self.select, self._gen())
 
     def val(self) -> str:
 
@@ -85,6 +85,7 @@ class BaseProp:
 class Select(BaseProp):
     _type: PropType = field(default=PropType.select, init=False)
     select: list[str] = field(default_factory=list, kw_only=True)
+    default: str | None = field(default=None)
 
 
 @dataclass
@@ -113,7 +114,6 @@ class Float(BaseProp):
     _type: PropType = field(default=PropType.float, init=False)
 
     default: float = field(default=0.0)
-
     min: float = field(default=0.0)
     """Minimum value"""
     max: float = field(default=10.0)
@@ -141,20 +141,23 @@ class Conditioning(BaseProp):
     _type: PropType = field(default=PropType.cond, init=False)
 
 
-class BaseMeta(type):
+class BaseMetaClass(type):
     def __init__(cls, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         if "input" not in cls.__dict__:
             raise TypeError(f"'input' prop must be defined within class {cls.__name__}")
         if "output" not in cls.__dict__:
             raise TypeError(
                 f"'output' prop must be defined within class {cls.__name__}"
             )
+
         d: tuple[BaseProp, ...] = cls.__dict__["output"]
         RETURN_TYPES = tuple([i._type.value for i in d])
         RETURN_NAMES = tuple(
             [(i.key if i.key else str(i._type.value).lower()) for i in d]
         )
+
         assert len(RETURN_NAMES) == len(RETURN_TYPES)
         setattr(cls, "RETURN_TYPES", RETURN_TYPES)
         setattr(cls, "RETURN_NAMES", RETURN_NAMES)
@@ -173,14 +176,18 @@ class BaseNode:
     def IS_CHANGED(cls, *args):
         return ""
 
-    @classmethod
-    def print(cls):
-        pprint(cls.__dict__)
 
+if __name__ == "__main__":
+    from rich import print
 
-class TestNode(BaseNode, metaclass=BaseMeta):
+    class TestNode(BaseNode, metaclass=BaseMetaClass):
 
-    input = (Int("int"), String("str"))
-    output = (Int("int"), String("str"))
-    FUNCTION = "solve"
-    CATEGORY = "TT"
+        input = (Int("int"), String("str"))
+        output = (Int("int"), String("str"))
+        FUNCTION = "solve"
+        CATEGORY = "TT"
+
+    t = Select("select", default="a", select=["a", "b", "c"])
+    print(t._res())
+    print(TestNode.INPUT_TYPES())
+    print(TestNode.__dict__)

@@ -2,7 +2,7 @@
 from .core import *
 
 
-class ClipTextEncoderPlus(BaseNode, metaclass=BaseMeta):
+class ClipTextEncoderPlus(BaseNode, metaclass=BaseMetaClass):
 
     input = (
         Clip("clip"),
