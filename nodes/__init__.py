@@ -1,6 +1,4 @@
-import core
-import nai
-import node
+from . import core, nai, node
 
 # import importlib
 
