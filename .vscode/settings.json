@@ -2,5 +2,10 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.enableSyncServer": true,
     "python.analysis.typeCheckingMode": "standard",
-    "python.analysis.stubPath": "typing"
+    "python.analysis.stubPath": "",
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.importFormat": "relative",
+    "python.analysis.inlayHints.pytestParameters": true,
+    "isort.check": true
 }

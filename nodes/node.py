@@ -2,16 +2,19 @@
 from .core import *
 
 
-class ClipTextEncoderPlus(BaseNode, metaclass=BaseMetaClass):
+class ClipTextEncoderPlus(BaseNode):
 
-    input = (
+    required = (
         Clip("clip"),
         String("text"),
         Conditioning("cond_in"),
         Select("opt", select=["combine", "average", "ignore"]),
     )
 
-    output = (Clip("clip"), Conditioning("cond_out"))
+    output = (
+        Clip("clip"),
+        Conditioning("cond_out"),
+    )
     OUTPUT_NODE = True
     FUNCTION = "solve"
     CATEGORY = "Tickt"
@@ -44,6 +47,7 @@ register.ezupd([(ClipTextEncoderPlus,)])
 
 if __name__ == "__main__":
     """"""
+    ClipTextEncoderPlus()
     # def check(x: TypedClass):
     #     pass
 

@@ -1,7 +1,10 @@
+import json
+from abc import ABC, ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal
-import json
+from typing import Annotated, Any, Iterable, Literal
+from typing_extensions import Unpack, assert_type
+import torch
 
 
 class JsonEncoder(json.JSONEncoder):
@@ -39,6 +42,8 @@ class PropType(str, Enum):
     float = "FLOAT"
     string = "STRING"
     select = "SELECT"
+    bool = "BOOLEAN"
+    custom = "CUSTOM"
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -55,30 +60,47 @@ InputType = dict[
 ]
 
 
-@dataclass()
+@dataclass
 class BaseProp:
-    select: list[str] = field(default_factory=list, init=False)
     _type: PropType
     key: str
 
-    def _gen(self):
+    def filter_props(self, ignore: Iterable = []):
+        ignore = set(ignore) | set(["key"])
         return {
             i: j
             for i, j in filter(
-                lambda x: x[0] not in ["key", "select"] and x[1] is not None,
+                lambda x: x[0] not in ignore and x[1] is not None,
                 self.__dict__.items(),
             )
         }
 
-    def _res(self):
-        if self._type != PropType.select:
-            return (self._type, self._gen())
-        return (self.select, self._gen())
+    def get_type(self):
+        return str(self._type).lower()
 
-    def val(self) -> str:
+    def res(self):
+        p = self.filter_props()
+        if p:
+            return (self.get_type(), p)
+        else:
+            return (self.get_type(),)
 
-        p = JsonEncoder().encode(self._res())
+    def schema(self) -> str:
+
+        p = JsonEncoder().encode(self.res())
         return json.loads(p, object_hook=hinted_tuple_hook)
+
+
+@dataclass
+class Custom(BaseProp):
+    _type: PropType = field(default=PropType.custom, init=False)
+    type: type[object] | str
+
+    def filter_props(self, ignore: Iterable = []):
+        return super().filter_props(["type"])
+
+    def get_type(self):
+        return self.type if isinstance(self.type, str) else self.type.__name__
 
 
 @dataclass
@@ -108,6 +130,8 @@ class Int(BaseProp):
     display: Literal["number", "slider"] = field(default="number")
     """Cosmetic only: display as "number" or "slider"""
 
+    def hints(self) -> int: ...
+
 
 @dataclass
 class Float(BaseProp):
@@ -127,6 +151,13 @@ class Float(BaseProp):
 
 
 @dataclass
+class Bool(BaseProp):
+    _type: PropType = field(default=PropType.bool, init=False)
+
+    default: bool = field(default=True)
+
+
+@dataclass
 class String(BaseProp):
     _type: PropType = field(default=PropType.string, init=False)
 
@@ -135,42 +166,75 @@ class String(BaseProp):
     """True if you want the field to look like the one on the ClipTextEncode node"""
     default: str = field(default="")
 
+    def hints(self) -> str: ...
+
 
 @dataclass
 class Conditioning(BaseProp):
     _type: PropType = field(default=PropType.cond, init=False)
 
 
-class BaseMetaClass(type):
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+@dataclass
+class Image(BaseProp):
+    _type: PropType = field(default=PropType.image, init=False)
 
-        if "input" not in cls.__dict__:
-            raise TypeError(f"'input' prop must be defined within class {cls.__name__}")
-        if "output" not in cls.__dict__:
-            raise TypeError(
-                f"'output' prop must be defined within class {cls.__name__}"
-            )
 
-        d: tuple[BaseProp, ...] = cls.__dict__["output"]
-        RETURN_TYPES = tuple([i._type.value for i in d])
-        RETURN_NAMES = tuple(
-            [(i.key if i.key else str(i._type.value).lower()) for i in d]
-        )
+# class BaseMetaClass(type):
+#     def __init__(cls, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+#         if "input" not in cls.__dict__:
+#             raise TypeError(f"'input' prop must be defined within class {cls.__name__}")
+#         if "output" not in cls.__dict__:
+#             raise TypeError(
+#                 f"'output' prop must be defined within class {cls.__name__}"
+#             )
+
+#         d: tuple[BaseProp, ...] = cls.__dict__["output"]
+#         RETURN_TYPES = tuple([i._type.value for i in d])
+#         RETURN_NAMES = tuple(
+#             [(i.key if i.key else str(i._type.value).lower()) for i in d]
+#         )
+
+#         assert len(RETURN_NAMES) == len(RETURN_TYPES)
+#         setattr(cls, "RETURN_TYPES", RETURN_TYPES)
+#         setattr(cls, "RETURN_NAMES", RETURN_NAMES)
+
+
+class BaseNode:
+
+    required: Iterable[BaseProp] = list()
+    hidden: Iterable[BaseProp] = list()
+    optional: Iterable[BaseProp] = list()
+    output: Iterable[BaseProp] = list()
+
+    OUTPUT_NODE: bool = True
+    FUNCTION: str = "encode"
+    CATEGORY: str = ""
+
+    def __init_subclass__(cls, *args, **kwargs):
+        """
+        控制 `RETURN_TYPES` 和 `RETURN_NAMES` 的生成
+        """
+        super().__init_subclass__(*args, **kwargs)
+
+        if "__iter__" not in cls.__dict__:
+            cls.output = ()
+
+        RETURN_TYPES = tuple([i.get_type() for i in cls.output])
+        RETURN_NAMES = tuple([(i.key if i.key else i.get_type()) for i in cls.output])
 
         assert len(RETURN_NAMES) == len(RETURN_TYPES)
         setattr(cls, "RETURN_TYPES", RETURN_TYPES)
         setattr(cls, "RETURN_NAMES", RETURN_NAMES)
 
-
-class BaseNode:
-
-    input: tuple[BaseProp, ...]
-    output: tuple[BaseProp, ...]
-
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {i.key: i.val() for i in cls.input}}
+        return {
+            "required": {i.key: i.schema() for i in cls.required},
+            "hidden": {i.key: i.schema() for i in cls.hidden},
+            "optional": {i.key: i.schema() for i in cls.optional},
+        }
 
     @classmethod
     def IS_CHANGED(cls, *args):
@@ -180,14 +244,15 @@ class BaseNode:
 if __name__ == "__main__":
     from rich import print
 
-    class TestNode(BaseNode, metaclass=BaseMetaClass):
+    # p = Custom("option", BaseProp)
+    # print(p.schema())
 
-        input = (Int("int"), String("str"))
-        output = (Int("int"), String("str"))
-        FUNCTION = "solve"
-        CATEGORY = "TT"
+    p = (Int("t"), Int("q"), String("r"))
+    # do some typing for q with p then pylance could get
+    q: tuple[int, int, str]
 
-    t = Select("select", default="a", select=["a", "b", "c"])
-    print(t._res())
-    print(TestNode.INPUT_TYPES())
-    print(TestNode.__dict__)
+    # def test(*args):
+    #     assert_type(args, p)
+
+    print(Int("t").hints())
+    # print((1, None) == (1,))
