@@ -2,7 +2,7 @@ import json
 from abc import ABC, ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Annotated, Any, Iterable, Literal
+from typing import Annotated, Any, Iterable, Literal, Generic, TypeVar, Type
 from typing_extensions import Unpack, assert_type
 import torch
 
@@ -29,7 +29,7 @@ def hinted_tuple_hook(obj):
         return obj
 
 
-class PropType(str, Enum):
+class ParamType(str, Enum):
     clip = "CLIP"
     cond = "CONDITIONING"
     model = "MODEL"
@@ -49,24 +49,27 @@ class PropType(str, Enum):
         return f"{self.value}"
 
 
-propA = Literal[PropType.int, PropType.float, PropType.string]
-
 InputType = dict[
     Literal["required"] | Literal["hidden"] | Literal["optional"],
     dict[
         str,
-        tuple[PropType, dict[str, Any] | None] | tuple[list[str]],
+        tuple[ParamType, dict[str, Any] | None] | tuple[list[str]],
     ],
 ]
 
 
 @dataclass
-class BaseProp:
-    _type: PropType
+class Param:
     key: str
+    _type: ParamType
 
-    def filter_props(self, ignore: Iterable = []):
-        ignore = set(ignore) | set(["key"])
+    def __init__(self, key, t, **kwargs):
+        self.key = key
+        self._type = t
+        self.__dict__.update(kwargs)
+
+    def props(self, ignore: Iterable = []):
+        ignore = set(ignore) | set(["key", "_type"])
         return {
             i: j
             for i, j in filter(
@@ -76,48 +79,55 @@ class BaseProp:
         }
 
     def get_type(self):
-        return str(self._type).lower()
+        """
+        获取该参数的类型，返回一个和该类型相等的字符串
+        """
+        return str(self._type)
 
     def res(self):
-        p = self.filter_props()
+        p = self.props()
         if p:
             return (self.get_type(), p)
         else:
             return (self.get_type(),)
 
-    def schema(self) -> str:
+    def schema(self):
 
         p = JsonEncoder().encode(self.res())
-        return json.loads(p, object_hook=hinted_tuple_hook)
+        return str(json.loads(p, object_hook=hinted_tuple_hook))
 
 
 @dataclass
-class Custom(BaseProp):
-    _type: PropType = field(default=PropType.custom, init=False)
-    type: type[object] | str
+class Custom(Param):
+    _type: ParamType = field(default=ParamType.custom, init=False)
+    type: Type[object] | str
 
-    def filter_props(self, ignore: Iterable = []):
-        return super().filter_props(["type"])
+    def __init__(self, key: str, type: Type[object] | str):
+        super().__init__(key, ParamType.custom)
+        self.type = type
+
+    def props(self, ignore: Iterable = []):
+        return super().props(["type"])
 
     def get_type(self):
         return self.type if isinstance(self.type, str) else self.type.__name__
 
 
 @dataclass
-class Select(BaseProp):
-    _type: PropType = field(default=PropType.select, init=False)
+class Select(Param):
+    _type: ParamType = field(default=ParamType.select, init=False)
     select: list[str] = field(default_factory=list, kw_only=True)
     default: str | None = field(default=None)
 
 
 @dataclass
-class Clip(BaseProp):
-    _type: PropType = field(default=PropType.clip, init=False)
+class Clip(Param):
+    _type: ParamType = field(default=ParamType.clip, init=False)
 
 
 @dataclass
-class Int(BaseProp):
-    _type: PropType = field(default=PropType.int, init=False)
+class Int(Param):
+    _type: ParamType = field(default=ParamType.int, init=False)
 
     default: int = field(default=0)
 
@@ -134,8 +144,8 @@ class Int(BaseProp):
 
 
 @dataclass
-class Float(BaseProp):
-    _type: PropType = field(default=PropType.float, init=False)
+class Float(Param):
+    _type: ParamType = field(default=ParamType.float, init=False)
 
     default: float = field(default=0.0)
     min: float = field(default=0.0)
@@ -151,15 +161,15 @@ class Float(BaseProp):
 
 
 @dataclass
-class Bool(BaseProp):
-    _type: PropType = field(default=PropType.bool, init=False)
+class Bool(Param):
+    _type: ParamType = field(default=ParamType.bool, init=False)
 
     default: bool = field(default=True)
 
 
 @dataclass
-class String(BaseProp):
-    _type: PropType = field(default=PropType.string, init=False)
+class String(Param):
+    _type: ParamType = field(default=ParamType.string, init=False)
 
     forceInput: bool = field(default=False)
     multiline: bool = field(default=False)
@@ -170,47 +180,25 @@ class String(BaseProp):
 
 
 @dataclass
-class Conditioning(BaseProp):
-    _type: PropType = field(default=PropType.cond, init=False)
+class Conditioning(Param):
+    _type: ParamType = field(default=ParamType.cond, init=False)
 
 
 @dataclass
-class Image(BaseProp):
-    _type: PropType = field(default=PropType.image, init=False)
+class Image(Param):
+    _type: ParamType = field(default=ParamType.image, init=False)
 
 
-# class BaseMetaClass(type):
-#     def __init__(cls, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
+class Node:
 
-#         if "input" not in cls.__dict__:
-#             raise TypeError(f"'input' prop must be defined within class {cls.__name__}")
-#         if "output" not in cls.__dict__:
-#             raise TypeError(
-#                 f"'output' prop must be defined within class {cls.__name__}"
-#             )
-
-#         d: tuple[BaseProp, ...] = cls.__dict__["output"]
-#         RETURN_TYPES = tuple([i._type.value for i in d])
-#         RETURN_NAMES = tuple(
-#             [(i.key if i.key else str(i._type.value).lower()) for i in d]
-#         )
-
-#         assert len(RETURN_NAMES) == len(RETURN_TYPES)
-#         setattr(cls, "RETURN_TYPES", RETURN_TYPES)
-#         setattr(cls, "RETURN_NAMES", RETURN_NAMES)
-
-
-class BaseNode:
-
-    required: Iterable[BaseProp] = list()
-    hidden: Iterable[BaseProp] = list()
-    optional: Iterable[BaseProp] = list()
-    output: Iterable[BaseProp] = list()
+    required: Iterable[Param]
+    hidden: Iterable[Param]
+    optional: Iterable[Param]
+    output: Iterable[Param]
 
     OUTPUT_NODE: bool = True
-    FUNCTION: str = "encode"
-    CATEGORY: str = ""
+    FUNCTION: str
+    CATEGORY: str
 
     def __init_subclass__(cls, *args, **kwargs):
         """
@@ -218,11 +206,23 @@ class BaseNode:
         """
         super().__init_subclass__(*args, **kwargs)
 
-        if "__iter__" not in cls.__dict__:
-            cls.output = ()
+        # if "__iter__" not in cls.__dict__:
+        #     cls.output = ()
 
-        RETURN_TYPES = tuple([i.get_type() for i in cls.output])
-        RETURN_NAMES = tuple([(i.key if i.key else i.get_type()) for i in cls.output])
+        RETURN_TYPES = tuple([i.get_type() for i in (cls.output if cls.output else [])])
+        RETURN_NAMES = tuple(
+            [
+                (i.key if i.key else i.get_type())
+                for i in (cls.output if cls.output else [])
+            ]
+        )
+
+        if cls.FUNCTION == None:
+            cls.FUNCTION = "run"
+        if cls.CATEGORY == None:
+            cls.CATEGORY = cls.__name__
+        if len(RETURN_TYPES):
+            cls.OUTPUT_NODE = False
 
         assert len(RETURN_NAMES) == len(RETURN_TYPES)
         setattr(cls, "RETURN_TYPES", RETURN_TYPES)
@@ -241,6 +241,20 @@ class BaseNode:
         return ""
 
 
+__all__ = [
+    "Bool",
+    "Clip",
+    "Conditioning",
+    "Custom",
+    "Float",
+    "Image",
+    "Int",
+    "Node",
+    "String",
+    "Select",
+]
+
+
 if __name__ == "__main__":
     from rich import print
 
@@ -254,5 +268,5 @@ if __name__ == "__main__":
     # def test(*args):
     #     assert_type(args, p)
 
-    print(Int("t").hints())
+    # print(Int("t").hints())
     # print((1, None) == (1,))

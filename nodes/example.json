@@ -1,0 +1,41 @@
+{
+  "ModelId": 28761,
+  "ModelName": "money style \u949E\u7968",
+  "ModelDescription": "\u003Cp\u003EBest Resolution\u6700\u4F73\u5206\u8FA8\u7387:960x448\u003C/p\u003E\u003Cp\u003Eweight\u6743\u91CD:0.5-0.8\u003C/p\u003E\u003Cp\u003Etag:money\u003C/p\u003E\u003Cp\u003EThe following tags can be selected for use \u4EE5\u4E0Btag\u53EF\u9009\u62E9\u4F7F\u7528\u003C/p\u003E\u003Cp\u003Edollar bill,banknote,monochrome, traditional media,\u003C/p\u003E\u003Cp\u003E\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u003C/p\u003E\u003Cp\u003EAfter testing, the most stable performance was achieved in the following large models\u003C/p\u003E\u003Cp\u003E\u7ECF\u6D4B\u8BD5,\u5728\u4EE5\u4E0B\u5927\u6A21\u578B\u4F7F\u7528\u6548\u679C\u6700\u4E3A\u7A33\u5B9A\u003C/p\u003E\u003Cp\u003E\u003Ca target=\u0022_blank\u0022 rel=\u0022ugc\u0022 href=\u0022https://civitai.com/models/16777/cec-half\u0022\u003Ecec-half\u003C/a\u003E\u003C/p\u003E\u003Cp\u003E\u003Ca target=\u0022_blank\u0022 rel=\u0022ugc\u0022 href=\u0022https://civitai.com/models/4468/counterfeit-v25\u0022\u003Ecounterfeit\u003C/a\u003E\u003C/p\u003E\u003Cp\u003E\u003C/p\u003E\u003Cp\u003E\u611F\u8C22\u003Ca rel=\u0022ugc\u0022 href=\u0022https://civitai.com/user/whiteand\u0022\u003E\u003Cstrong\u003Ewhiteand\u003C/strong\u003E\u003C/a\u003E\u7684\u778EJB\u6D4B\u8BD5 XDDDD\u003C/p\u003E\u003Cp\u003EThank you for \u003Ca rel=\u0022ugc\u0022 href=\u0022https://civitai.com/user/whiteand\u0022\u003E\u003Cstrong\u003Ewhiteand\u003C/strong\u003E\u003C/a\u003E blind test  : )\u003C/p\u003E",
+  "Nsfw": false,
+  "Tags": [
+    "style"
+  ],
+  "ModelType": "LORA",
+  "VersionId": 34506,
+  "VersionName": "v1.0",
+  "VersionDescription": null,
+  "BaseModel": "SD 1.5",
+  "FileMetadata": {
+    "fp": "fp16",
+    "size": "full",
+    "format": "SafeTensor"
+  },
+  "ImportedAt": "2024-12-19T21:03:17.9053435+00:00",
+  "Hashes": {
+    "SHA256": "F92724CE7153705AECE8089B33D66D71B85A05CD338A11DCD7E0647CF4E11ACD",
+    "CRC32": "85C95B2E",
+    "BLAKE3": "12F069A5AC40F840BE50DBFEB03BBF154E9B0C53EF74B6166F231B60B8928155"
+  },
+  "TrainedWords": [
+    "money,",
+    "money,dollar bill,banknote,",
+    "traditional media,",
+    "monochrome"
+  ],
+  "Stats": {
+    "favoriteCount": 0,
+    "commentCount": 13,
+    "thumbsUpCount": 372,
+    "downloadCount": 1440,
+    "ratingCount": 0,
+    "rating": 0
+  },
+  "UserTitle": null,
+  "ThumbnailImageUrl": null
+}

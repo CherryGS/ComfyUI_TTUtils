@@ -1,10 +1,10 @@
-from .core import BaseNode
+from .core import Node
 
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
-ClassMapping = dict[str, type[BaseNode]]
+ClassMapping = dict[str, type[Node]]
 NameMapping = dict[str, str]
 
 
@@ -15,11 +15,7 @@ def update(cls: ClassMapping, name: NameMapping):
 
 
 def ezupd(
-    src: list[
-        tuple[type[BaseNode]]
-        | tuple[type[BaseNode], str]
-        | tuple[type[BaseNode], str, str]
-    ]
+    src: list[tuple[type[Node]] | tuple[type[Node], str] | tuple[type[Node], str, str]]
 ):
     """第一个 `str` 是显示在 comfyui 里的名称 , 第三个是用来做 key 映射的名称 , 如果没有会用 Node 的名称代替"""
     cls: ClassMapping = {}

@@ -7,11 +7,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-novelai-api = "^0.26.0"
 
 
 [tool.poetry.group.dev.dependencies]
 rich = "^13.7.1"
+pytest = "^8.3.4"
 
 [build-system]
 requires = ["poetry-core"]
